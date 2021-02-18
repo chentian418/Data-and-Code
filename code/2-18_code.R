@@ -19,7 +19,7 @@ set.seed(2345)
 # create the data for classification
 x <- matrix(rnorm(20*2), ncol=2)
 class <- c(rep(-1,10), rep(1,10))
-x[class == 1, ] = x[class == 1, ] + 1
+x[class == 1, ] = x[class == 1, ] + 1 # push the points further apart
 
 train <- data.frame(x = x, class = as.factor(class)) 
 
