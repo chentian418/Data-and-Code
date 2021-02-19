@@ -15,7 +15,7 @@ library(rpart.plot)
 library(ranger)
 
 set.seed(1234)
-theme_set(theme_minimal())
+theme_set(theme_minimal()) # set the theme for all figures
 
 # set up the Ames housing data
 
@@ -25,6 +25,8 @@ ames_train <- training(ames_split)
 ames_test  <- testing(ames_split)
 
 # A default RF model
+# By default, randomForest() uses p/3 features when building a random forest of regression trees, 
+# and $\sqrt{p} features when building a random forest of classification trees; and ntree = 500
 
 m1 <- randomForest(
   formula = Sale_Price ~ .,
@@ -52,7 +54,7 @@ set.seed(123)
 valid_split <- initial_split(ames_train, .8)
 
 # training data
-ames_train_v2 <- analysis(valid_split)
+ames_train_v2 <- analysis(valid_split) # analysis and assessment return dataframes.
 
 # validation data
 ames_valid <- assessment(valid_split)
@@ -70,7 +72,7 @@ rf_oob_comp <- randomForest(
 oob <- sqrt(rf_oob_comp$mse)
 validation <- sqrt(rf_oob_comp$test$mse)
 
-# compare error rates
+# compare error rates from two ways to assess the random forest
 tibble(
   `Out of Bag Error` = oob,
   `Test error` = validation
@@ -92,10 +94,10 @@ tibble(
 
 # First, set up and search a grid
 hyper_grid <- expand.grid(
-  mtry = seq(20, 30, by = 2),
-  node_size = seq(3, 9, by = 2),
-  sampe_size = c(.55, .632, .70, .80),
-  OOB_RMSE = 0
+  mtry = seq(20, 30, by = 2), # number of variables in each split
+  node_size = seq(3, 9, by = 2), # more nodes-deeper trees, controlling complexities
+  sampe_size = c(.55, .632, .70, .80), # that's the sample size we use in training data; if we use bootstrapping, sample_size=N
+  OOB_RMSE = 0 # loop over the grid, and set te RMSE to empty for now
 )
 
 for(i in 1:nrow(hyper_grid)) {
@@ -103,7 +105,7 @@ for(i in 1:nrow(hyper_grid)) {
   model <- ranger(
     formula = Sale_Price ~ ., 
     data = ames_train, 
-    num.trees = 500,
+    num.trees = 500, # as num of trees exceeds 500, results are similar
     mtry = hyper_grid$mtry[i],
     min.node.size = hyper_grid$node_size[i],
     sample.fraction = hyper_grid$sampe_size[i],
@@ -120,7 +122,7 @@ hyper_grid <- hyper_grid %>%
 
 hyper_grid %>%
   head(10)
-
+#the optimal sample size is 0.8, the largest. More data, more opportunity to better learn the model.
 # Repeat 100 times
 
 #
@@ -164,7 +166,7 @@ pred_ranger <- function(model, newdata){
   return(results$prediction)
 }
 
-library(iml)
+library(iml) # interpretable machine learning
 
 predictor_rf <- Predictor$new(
   model = optimal_ranger,
@@ -212,7 +214,7 @@ rf_oob <- randomForest(
   replace = FALSE,
   sampsize = ceiling(hyper_grid$sampe_size[[1]] * nrow(ames_train))
 )
-
+# ways to compare models as in ps3
 # viz
 tibble(
   Bagging = sqrt(bag_oob$mse),
@@ -259,7 +261,7 @@ for(lmi in 1:length(lambda_range)){
                    newdata = ANES[train, ], 
                    n.trees = 1000)
   
-  training_set_mse[lmi] <- mean((y_hat - ANES[train, ]$biden)^2)
+  training_set_mse[lmi] <- mean((y_hat - ANES[train, ]$biden)^2) # manually compute the MSE
   
   # testing error
   y_hat <- predict(boost2_ANES, 
@@ -270,6 +272,7 @@ for(lmi in 1:length(lambda_range)){
 }
 
 # viz both curves
+# the sweet spot lies in the intersection of the two lines
 {
   plot(lambda_range, training_set_mse, 
      type = 'l', 
@@ -321,16 +324,16 @@ library(tidymodels)
 xgb_spec <- boost_tree(
   trees = 500, 
   tree_depth = tune(), 
-  min_n = tune(), 
-  loss_reduction = tune(),                  
-  sample_size = tune(),
-  mtry = tune(), 
+  min_n = tune(), # min # of nodes
+  loss_reduction = tune(), # min of amounts           
+  sample_size = tune(),# how much data to appear in the training set
+  mtry = tune(), # # of parameters
   learn_rate = tune(),
 ) %>% 
   set_engine("xgboost") %>% 
   set_mode("regression")
 
-
+# set up the hyperpaprameter tuning grid
 xgb_grid <- grid_latin_hypercube(
   tree_depth(),
   min_n(),
