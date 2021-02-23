@@ -97,7 +97,7 @@ hyper_grid <- expand.grid(
   mtry = seq(20, 30, by = 2), # number of variables in each split
   node_size = seq(3, 9, by = 2), # more nodes-deeper trees, controlling complexities
   sampe_size = c(.55, .632, .70, .80), # that's the sample size we use in training data; if we use bootstrapping, sample_size=N
-  OOB_RMSE = 0 # loop over the grid, and set te RMSE to empty for now
+  OOB_RMSE = 0 # loop over the grid, and set the RMSE to empty for now
 )
 
 for(i in 1:nrow(hyper_grid)) {
@@ -334,7 +334,7 @@ xgb_spec <- boost_tree(
   set_mode("regression")
 
 # set up the hyperpaprameter tuning grid
-xgb_grid <- grid_latin_hypercube(
+xgb_grid <- grid_latin_hypercube( # randomly construct the parapmeter space in a constraint way
   tree_depth(),
   min_n(),
   loss_reduction(),
